@@ -50,7 +50,7 @@ struct DetailView: View {
             Text("Calories: \(item.calories)")
                 .bold()
                 .font(.title)
-            Text("THis is just an estimate")
+            Text("This is just an estimate")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.gray)
