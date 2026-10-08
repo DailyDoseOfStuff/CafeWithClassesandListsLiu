@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct CafeWithClassesandListsLiuApp: App {
@@ -13,5 +14,7 @@ struct CafeWithClassesandListsLiuApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: Item.self)
+
     }
 }

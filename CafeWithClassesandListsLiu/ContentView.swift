@@ -6,6 +6,7 @@
 //
 
 import Observation
+import SwiftData
 import SwiftUI
 
 struct ContentView: View {
@@ -74,7 +75,8 @@ struct ContentView: View {
     ]
 
     // Actual cart array
-    @State var cart: [Item] = []
+    @Environment(\.modelContext) var context
+    @Query var cart: [Item]
 
     var body: some View {
         NavigationStack {
@@ -94,8 +96,7 @@ struct ContentView: View {
                 // Menu List
                 List {
                     ForEach(inventory) { thing in
-                        // Only 2 labeled arguments needed here:
-                        ShopItemRow(product: thing, cart: $cart)
+                        ShopItemRow(product: thing)
                             .listRowBackground(Color(.brown))
                             .listRowSeparator(.hidden)
                             .listRowInsets(
@@ -111,7 +112,7 @@ struct ContentView: View {
                 .listStyle(.plain)
 
                 // Cart Button
-                NavigationLink(destination: CartView(cart: $cart)) {
+                NavigationLink(destination: CartView()) {
                     Label("Cart (\(cart.count))", systemImage: "cart.fill")
                         .foregroundStyle(.black)
                         .background(
@@ -132,7 +133,9 @@ struct ContentView: View {
 struct ShopItemRow: View {
 
     var product: Item
-    @Binding var cart: [Item]
+
+    @Environment(\.modelContext) var context
+    @Query var cart: [Item]
 
     var itemCount: Int {
         cart.filter { $0.name == product.name }.count
@@ -163,7 +166,9 @@ struct ShopItemRow: View {
             Spacer()
 
             Button {
-                cart.append(product.makeCopy())
+                let newItem = product.makeCopy()
+                context.insert(newItem)
+                try? context.save()
             } label: {
                 Image(systemName: "plus.circle.fill")
                     .font(.title2)
@@ -178,9 +183,11 @@ struct ShopItemRow: View {
 
             // Minus Button: Removes one copy from cart
             Button {
-                if let index = cart.lastIndex(where: { $0.name == product.name }
-                ) {
-                    cart.remove(at: index)
+                if let itemToRemove = cart.last(where: {
+                    $0.name == product.name
+                }) {
+                    context.delete(itemToRemove)
+                    try? context.save()
                 }
             } label: {
                 Image(systemName: "minus.circle.fill")
@@ -199,4 +206,5 @@ struct ShopItemRow: View {
 
 #Preview {
     ContentView()
+        .modelContainer(for: Item.self, inMemory: true)
 }

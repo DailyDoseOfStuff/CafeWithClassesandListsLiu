@@ -6,11 +6,15 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CartView: View {
 
-    @Binding var cart: [Item]
 
+    @Environment(\.modelContext) var context
+    @Query var cart: [Item]
+    
+    
     var orderedItems: [Item] {
         let withQuantity = cart.filter { $0.amt > 0 }
         return withQuantity.isEmpty ? cart : withQuantity
@@ -45,14 +49,12 @@ struct CartView: View {
                     CartItemRow(
                         product: thing,
                         onRemove: {
-                            if let index = cart.firstIndex(where: {
-                                $0.name == thing.name
-                            }) {
-                                cart.remove(at: index)
-                            }
-                            if thing.amt > 0 {
+                            if thing.amt > 1 {
                                 thing.amt -= 1
+                            } else {
+                                context.delete(thing)
                             }
+                            try? context.save()
                         }
                     )
                     .listRowBackground(Color(.green))
@@ -136,6 +138,10 @@ struct CartItemRow: View {
 }
 
 #Preview {
+    
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Item.self, configurations: config)
+    
     let sampleItem = Item(
         name: "Ice Latte",
         price: 5.00,
@@ -150,5 +156,11 @@ struct CartItemRow: View {
     )
     sampleItem.amt = 1
 
-    return CartView(cart: .constant([sampleItem]))
+    container.mainContext.insert(sampleItem)
+    
+    return NavigationStack{
+        CartView()
+    }
+    .modelContainer(container)
+    
 }
